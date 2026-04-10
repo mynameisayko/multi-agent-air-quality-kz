@@ -33,11 +33,18 @@ CITY_FILES = {
 
 
 def load_city(city: str, path: Path, start: str, max_stations: int) -> pd.DataFrame:
-    raw = pd.read_csv(path, parse_dates=["datetime_utc"])
+    raw = pd.read_csv(
+        path,
+        parse_dates=["datetime_utc"],
+        dtype={"station_id": str, "station_name": str, "cluster_id": str, "cluster_name": str},
+        low_memory=False,
+    )
     raw["datetime_utc"] = pd.to_datetime(raw["datetime_utc"], utc=True)
     raw = raw[raw["datetime_utc"] >= pd.Timestamp(start, tz="UTC")].copy()
     raw["timestamp"] = raw["datetime_utc"].dt.floor("h").dt.tz_convert(None)
     raw["city"] = city
+    raw["station_id"] = raw["station_id"].astype(str)
+    raw["station_name"] = raw["station_name"].fillna("unknown").astype(str)
 
     counts = raw.groupby("station_id")["value_ugm3"].count().sort_values(ascending=False)
     keep_stations = counts.head(max_stations).index
@@ -80,6 +87,8 @@ def build_dataframe(start: str, max_stations_per_city: int, interpolation_limit:
     df = df.sort_values(["city", "station_id", "timestamp"]).reset_index(drop=True)
 
     df["series_id"] = df["city"].astype(str) + "__" + df["station_id"].astype(str)
+    df["city"] = df["city"].astype(str)
+    df["station_id"] = df["station_id"].astype(str)
     df["pm25_lag_1"] = df.groupby("series_id")["pm25_value"].shift(1)
     df["pm25_lag_24"] = df.groupby("series_id")["pm25_value"].shift(24)
     df["pm25_lag_168"] = df.groupby("series_id")["pm25_value"].shift(168)
