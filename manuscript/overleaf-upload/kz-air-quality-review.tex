@@ -1,0 +1,170 @@
+% Draft literature review prepared for the project:
+% Multi-Agent System with Temporal Fusion Transformer for Urban Air Quality Forecasting
+% and Health Risk Assessment in Kazakhstan
+
+\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}
+
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{amsmath,amssymb,amsfonts}%
+\usepackage{mathrsfs}%
+\usepackage[title]{appendix}%
+\usepackage{xcolor}%
+\usepackage{textcomp}%
+\usepackage{manyfoot}%
+\usepackage{booktabs}%
+\usepackage{algorithm}%
+\usepackage{algorithmicx}%
+\usepackage{algpseudocode}%
+\usepackage{listings}%
+
+\raggedbottom
+
+\begin{document}
+
+\title[Toward an Interpretable Multi-Agent Framework for Air Quality Forecasting in Kazakhstan]{A Multi-Agent System with Temporal Fusion Transformer for Urban Air Quality Forecasting and Health Risk Assessment in Kazakhstan}
+
+\author*[1]{\fnm{First} \sur{Author}}\email{first.author@email.com}
+\author[1]{\fnm{Second} \sur{Author}}\email{second.author@email.com}
+
+\affil*[1]{\orgdiv{Department}, \orgname{University}, \orgaddress{\city{City}, \country{Kazakhstan}}}
+
+\abstract{Urban air pollution remains a major environmental and public health challenge in Kazakhstan, especially in cities affected by coal combustion, traffic emissions, industrial activities, and adverse meteorological conditions. Existing studies in Kazakhstan mainly focus on pollutant characterization, source apportionment, and retrospective health burden estimation, while operational forecasting and health-oriented decision support remain underdeveloped. This article positions and structures a study on an interpretable multi-agent system with Temporal Fusion Transformer for multi-horizon urban air quality forecasting and health risk assessment in Kazakhstan. The proposed framework combines distributed data handling, transformer-based prediction, and health-oriented alert generation. The article synthesizes the relevant literature, formulates the research gap, defines the methodological design, states the research questions, and outlines the expected scientific and practical contributions. The study is intended to support city-level early warning, improve interpretability in air quality forecasting, and connect environmental prediction with public-health-oriented analytics.}
+
+\keywords{air quality forecasting, Temporal Fusion Transformer, multi-agent systems, health risk assessment, Kazakhstan, PM$_{2.5}$}
+
+\maketitle
+
+\section{Introduction}\label{sec:introduction}
+
+Urban air pollution is increasingly understood as a coupled atmospheric, public health, and governance problem rather than as an isolated environmental phenomenon. Modern forecasting systems are therefore expected not only to estimate future pollutant concentrations, but also to support early warning, risk communication, and operational intervention. A broad review of air quality forecasting methods shows a clear transition from conventional statistical models toward machine learning and deep learning approaches capable of learning nonlinear interactions among pollutants, meteorological drivers, and anthropogenic variables \cite{mendez2023survey}. At the same time, public health studies continue to demonstrate that exposure to particulate matter is associated with respiratory and cardiovascular outcomes, making air quality forecasting relevant for both environmental management and health protection \cite{muratuly2025health}.
+
+For Kazakhstan, the problem is particularly acute. Large cities such as Almaty and Astana experience heterogeneous pollution patterns shaped by coal-fired heating, combined heat and power plants, traffic emissions, industrial sources, resuspended dust, and seasonal meteorological trapping \cite{mukhtarov2023winter,ormanova2025astana,tursun2025sources}. Existing studies for Kazakhstan provide important evidence on pollutant composition, source apportionment, and economic or health burden, but comparatively little work has focused on an integrated system that is predictive, interpretable, and explicitly linked to health-oriented decision support. This gap is consequential because city authorities require not only retrospective analysis, but also actionable forecasts that help anticipate high-risk periods and prioritize protective response.
+
+Recent advances in transformer-based time-series modeling are directly relevant in this context. Temporal Fusion Transformer (TFT) is especially promising because it supports multi-horizon forecasting, heterogeneous covariates, and interpretable feature relevance \cite{lim2021tft}. In parallel, the literature on multi-agent systems (MAS) offers mechanisms for distributed sensing, coordination, and decision routing in complex urban environments \cite{dragomir2013mas,zhu2021multisensing}. However, these two lines of research have rarely been integrated in a Kazakhstan-focused air quality application, and health risk assessment is still typically treated as a separate downstream exercise rather than as part of the operational forecasting workflow.
+
+This article develops a near-ready conceptual and methodological foundation for a study titled \textit{A Multi-Agent System with Temporal Fusion Transformer for Urban Air Quality Forecasting and Health Risk Assessment in Kazakhstan}. The paper first synthesizes the relevant literature, then identifies the research gap, formulates the research questions, proposes a methods section consistent with the current state of the field, and clarifies the intended scientific contribution and expected results.
+
+\section{Literature Review}\label{sec:litreview}
+
+\subsection{Urban air pollution and health burden in Kazakhstan}\label{subsec:kazakhstan}
+
+The emerging literature on Kazakhstan confirms that urban air pollution is not a marginal or isolated problem. Mukhtarov et al.\ \cite{mukhtarov2023winter} analyzed wintertime PM$_{2.5}$ pollution in Almaty and showed that severe episodes are associated with persistent cold-season conditions and a combination of local emissions and atmospheric accumulation. Ormanova et al.\ \cite{ormanova2025astana} further demonstrated through chemical characterization and source apportionment that fine particulate pollution in Astana reflects multiple source categories rather than a single dominant driver. More recently, Tursun et al.\ \cite{tursun2025sources} used PMF and HYSPLIT-based analysis to show that PM$_{2.5}$ in Kazakhstan's urban centers is shaped by both local sources and air-mass transport, underscoring the need for forecasting models that can handle exogenous meteorological and trajectory-related factors.
+
+The public-health significance of this environmental burden is also becoming more visible in the literature. Muratuly et al.\ \cite{muratuly2025health} quantified the health burden and economic costs of urban PM$_{2.5}$ pollution in Kazakhstan and argued that the magnitude of attributable mortality and welfare losses justifies stronger evidence-based management. This line of work is important because it shifts the discussion from pollutant exceedance alone to the social consequences of exposure. However, most Kazakhstan-focused studies remain descriptive, source-oriented, or retrospective. They provide essential context for modeling, but they do not yet deliver an operational pipeline that links future pollutant levels to health-oriented alerts in a way that city authorities could use in near real time.
+
+\subsection{From classical forecasting to machine learning and deep learning}\label{subsec:forecasting}
+
+Air quality forecasting has historically relied on statistical methods, deterministic atmospheric models, or hybrids of the two. The broad survey by M\'{e}ndez and Casanova-Mateo \cite{mendez2023survey} shows that machine learning methods gained traction because they can learn nonlinear relations among pollutants, meteorology, land-use proxies, and anthropogenic activity indicators with fewer physical assumptions than chemistry-transport models. These data-driven methods are especially attractive when local sensor data are available but full physical simulation remains computationally expensive or operationally rigid.
+
+Deep learning has further advanced this agenda by improving sequence modeling and multi-variate prediction. Recent operational work on automated air quality forecasting systems has shown the value of end-to-end machine learning pipelines that combine feature selection, hyperparameter optimization, and forecast generation for multiple pollutants \cite{jiao2022automated}. The strength of this literature is its practical orientation toward deployment. Its limitation is that many models still optimize point forecast skill without adequately addressing interpretability, transferability across cities, or direct linkage to downstream health-risk indicators.
+
+\subsection{Transformer-based models and the relevance of Temporal Fusion Transformer}\label{subsec:tft}
+
+Transformer architectures have become increasingly attractive for air quality forecasting because they are well suited to long-range temporal dependencies and multivariate sequence learning. Comparative reviews indicate that transformer-based models are a growing subfield within air quality prediction, particularly where long horizons, high-dimensional inputs, and multi-station data need to be handled coherently \cite{mendez2023survey}. Specific implementations support this trend. Cui et al.\ \cite{cui2023sparse} proposed a sparse attention transformer for PM$_{2.5}$ prediction and reported improvements in capturing temporal structure with reduced computational burden. Wang et al.\ \cite{wang2023msaformer} introduced MSAFormer, which combines sparse autoencoding and transformer-based prediction for multi-site meteorological features in urban PM$_{2.5}$ forecasting. Hu et al.\ \cite{hu2024feddeep} extended the forecasting problem to a federated multi-urban setting, indicating that distributed learning can be relevant when data ownership or infrastructure is fragmented across sites.
+
+Within this family, TFT is especially relevant for the proposed Kazakhstan study. Lim et al.\ \cite{lim2021tft} designed TFT for interpretable multi-horizon forecasting with static covariates, known future inputs, and observed historical series. This architecture directly addresses several requirements of urban air quality forecasting: multiple exogenous drivers, changing temporal patterns, and the need to explain why the model issues a forecast. In contrast to many generic deep models, TFT offers variable selection, gating mechanisms, and attention-based interpretation. These properties are important in an applied environmental-health setting where domain experts and public agencies often require transparent reasoning rather than a purely black-box forecast.
+
+Nevertheless, a gap remains between the promise of TFT and its application context. Most transformer-based air quality studies are developed on data from China or other high-density monitoring ecosystems, whereas Kazakhstan presents different source structure, station density, heating patterns, and policy needs. In addition, many forecasting papers evaluate model accuracy but stop short of integrating forecast outputs into a health risk layer or a coordinated monitoring-and-response framework.
+
+\subsection{Multi-agent systems for urban air quality monitoring and decision support}\label{subsec:mas}
+
+The literature on multi-agent systems (MAS) contributes a different but complementary perspective. Rather than focusing only on predictive accuracy, MAS research addresses distributed sensing, coordination among heterogeneous entities, and decision support. Dragomir and Oprea \cite{dragomir2013mas} presented an early multi-agent system for power-plant air pollution monitoring, showing that distributed artificial intelligence can support real-time monitoring scenarios. Zhu et al.\ \cite{zhu2021multisensing} later reviewed urban air quality monitoring and hazardous gas source analysis and proposed a conceptual framework in which mobile and static sensing agents jointly support fine-grained urban monitoring and emergency response.
+
+These studies are useful because they conceptualize air-quality management as a coordination problem rather than as a single predictive task. However, most MAS-oriented studies emphasize sensing architecture, source search, or emergency management. They rarely incorporate state-of-the-art interpretable sequence models such as TFT, and they typically do not integrate a formal health risk assessment module. This creates a design opportunity for a new class of systems in which distributed agents manage data collection, model updating, alert generation, and decision routing while the predictive core remains transparent and multi-horizon.
+
+\subsection{Health risk assessment as a downstream task rather than an afterthought}\label{subsec:health}
+
+Another important strand of literature concerns the translation of pollutant concentrations into health-relevant indicators. In many urban air quality studies, health is mentioned primarily as motivation, but the analytical workflow ends at concentration forecasting. The consequence is a disconnect between environmental prediction and public-health action. Muratuly et al.\ \cite{muratuly2025health} help narrow this gap for Kazakhstan by quantifying burden and costs, while Johnson et al.\ \cite{johnson2025agent} illustrate how agent-based geospatial modeling can be used to assess PM$_{2.5}$ exposure disparities in urban airsheds. Together, these studies suggest that risk is spatially and socially heterogeneous, and that exposure-informed analytics can complement pollutant forecasting.
+
+For the proposed project, the literature implies that forecasting alone is insufficient. A useful system for Kazakhstani cities should translate pollutant trajectories into interpretable health-oriented signals, such as exceedance warnings, exposure categories, or population-sensitive risk indices. This would align the forecasting module with the actual decision context of municipal authorities, health agencies, and vulnerable populations.
+
+\section{Research Gap and Study Motivation}\label{sec:gap}
+
+The literature review points to four connected gaps.
+
+First, Kazakhstan-focused studies are expanding, but they are concentrated on pollutant characterization, source apportionment, and retrospective burden estimation rather than on integrated predictive systems \cite{mukhtarov2023winter,ormanova2025astana,tursun2025sources,muratuly2025health}. Second, advanced deep learning models for air quality forecasting are mostly developed and validated outside Central Asia, which limits confidence in their transferability to Kazakhstani cities with distinct heating, industrial, and meteorological regimes \cite{cui2023sparse,wang2023msaformer,hu2024feddeep}. Third, MAS literature provides useful concepts for distributed sensing and decision support, but it has not been tightly coupled with interpretable transformer-based forecasting \cite{dragomir2013mas,zhu2021multisensing}. Fourth, health risk assessment is usually treated as a separate downstream analysis instead of being operationally integrated into the forecasting workflow.
+
+These gaps support a methodological and practical rationale for the proposed study. A multi-agent framework can coordinate heterogeneous data streams, local forecasting services, and alerting logic across urban locations. TFT can serve as the forecasting core because it supports multi-horizon prediction, variable heterogeneity, and interpretability. A health risk module can convert forecast pollutant concentrations into more actionable outputs for public-health communication and city management. In this sense, the proposed study is not merely another forecasting exercise; it is an attempt to bridge environmental monitoring, predictive analytics, and health-oriented decision support for Kazakhstan.
+
+\section{Methods}\label{sec:methods}
+
+\subsection{Study design}\label{subsec:study_design}
+
+The proposed study is designed as a data-driven urban forecasting and decision-support framework for one or more major cities in Kazakhstan, with initial emphasis on Almaty and Astana due to the relative availability of evidence on pollutant composition and source structure \cite{mukhtarov2023winter,ormanova2025astana,tursun2025sources}. The general objective is to forecast short-term and multi-horizon air quality conditions and translate those forecasts into health-relevant risk signals.
+
+The study integrates three layers: a data layer, a forecasting layer, and a decision-support layer. The data layer aggregates pollutant, meteorological, temporal, and contextual variables. The forecasting layer uses TFT as the core predictive model. The decision-support layer transforms forecast outputs into interpretable health risk categories and warning messages suitable for urban management and public communication.
+
+\subsection{Data sources and variables}\label{subsec:data}
+
+The data layer is expected to include hourly or daily pollutant concentrations such as PM$_{2.5}$, PM$_{10}$, NO$_2$, SO$_2$, CO, and O$_3$, depending on station availability. Meteorological covariates should include temperature, humidity, wind speed, wind direction, atmospheric pressure, precipitation, and other variables that influence dispersion and accumulation. Additional contextual variables may include seasonality indicators, calendar features, heating season markers, traffic proxies, and potentially air-mass trajectory indicators where available.
+
+Following the logic of TFT, the full variable set should be divided into three categories: static covariates, known future inputs, and observed historical inputs \cite{lim2021tft}. Static covariates can include station identity, city identity, and location metadata. Known future inputs can include calendar variables and forecast meteorology. Observed historical inputs can include lagged pollutant concentrations and historical weather observations. This structure is appropriate for multi-horizon forecasting in heterogeneous urban settings.
+
+\subsection{Multi-agent system architecture}\label{subsec:mas_arch}
+
+The proposed MAS architecture contains several functional agents. A data acquisition agent collects and synchronizes observations from environmental stations and external meteorological sources. A preprocessing agent performs cleaning, temporal alignment, missing-value treatment, normalization, and feature engineering. A forecasting agent trains and executes the TFT model for each target pollutant or monitoring site. A health risk agent converts pollutant forecasts into risk-oriented outputs, such as exceedance alerts or exposure categories. A coordination agent manages task scheduling, agent communication, logging, and model update triggers. Finally, a reporting agent prepares outputs for dashboards, alerts, and periodic analytical summaries.
+
+This architecture is aligned with prior MAS literature on environmental monitoring \cite{dragomir2013mas,zhu2021multisensing}, but it extends earlier frameworks by placing an interpretable transformer model at the core of the predictive pipeline and by treating health risk estimation as a first-class system component rather than as a separate post-processing step.
+
+\subsection{Forecasting model}\label{subsec:forecasting_model}
+
+TFT will be used as the main predictive model because it can jointly handle static information, time-varying known inputs, and time-varying observed inputs while preserving interpretability through attention and variable selection mechanisms \cite{lim2021tft}. The model is expected to generate multi-horizon forecasts for pollutant concentrations over short- and medium-range windows, for example 6, 12, 24, and 48 hours ahead depending on data frequency and policy needs.
+
+To evaluate whether the proposed architecture is justified, TFT should be compared with baseline models from different methodological families. These may include linear regression or ARIMA-type baselines, tree-based machine learning models such as XGBoost, recurrent networks such as LSTM, and selected transformer-based alternatives reported in the air quality literature \cite{jiao2022automated,cui2023sparse,wang2023msaformer,hu2024feddeep}. This comparative design is necessary because superior performance should be demonstrated rather than assumed.
+
+\subsection{Health risk assessment module}\label{subsec:health_module}
+
+The health risk module is intended to transform predicted pollutant concentrations into interpretable risk indicators. Depending on data availability, this module can operate at two levels. At the first level, it can classify forecasted concentrations into threshold-based warning categories derived from national standards or WHO-oriented bands. At the second level, it can estimate simplified exposure-oriented health indicators linked to short-term pollution severity. The exact epidemiological formulation will depend on accessible local data, but the module should preserve a clear mapping between pollutant forecast values and health-relevant interpretation \cite{muratuly2025health,johnson2025agent}.
+
+\subsection{Evaluation strategy}\label{subsec:evaluation}
+
+Model performance should be evaluated with error metrics appropriate for regression forecasting, such as MAE, RMSE, MAPE, and $R^2$. Because the application includes warnings and exceedance detection, classification-oriented metrics such as precision, recall, and F1-score should also be used for risk categories. In addition, interpretability analysis should be included through TFT variable importance, temporal attention patterns, and comparison of feature relevance across seasons, cities, or pollution episodes.
+
+The study should also evaluate operational value rather than accuracy alone. This means examining whether the system improves early identification of hazardous episodes, whether it preserves stable performance across cities and seasons, and whether its outputs are understandable enough to support environmental and public-health decisions.
+
+\section{Research Questions}\label{sec:rq}
+
+The proposed study is guided by the following research questions:
+
+\begin{enumerate}
+\item How accurately can a Temporal Fusion Transformer forecast short-term and multi-horizon urban air pollutant concentrations in major cities of Kazakhstan compared with statistical, machine learning, and alternative deep learning baselines?
+\item Does a multi-agent architecture improve the organization, automation, and operational usability of urban air quality forecasting workflows in comparison with a monolithic forecasting pipeline?
+\item Which meteorological, temporal, and pollutant-specific variables are most influential in TFT-based forecasts for Kazakhstani urban environments?
+\item To what extent can forecast pollutant concentrations be translated into interpretable health risk categories that are useful for early warning and decision support?
+\item How robust is the proposed system across different cities, seasons, and pollution episodes characterized by distinct source structures and atmospheric conditions?
+\end{enumerate}
+
+\section{Contribution}\label{sec:contribution}
+
+The expected contribution of the study is threefold. First, it provides an empirical contribution by focusing on Kazakhstan, a context that is still underrepresented in advanced air quality forecasting research despite its substantial pollution burden. Second, it provides a methodological contribution by integrating MAS principles with TFT-based multi-horizon forecasting in a single operational framework. Third, it provides an applied contribution by connecting pollutant forecasting to a health risk assessment layer, thereby making the model outputs more actionable for decision-makers.
+
+More specifically, the article aims to contribute an interpretable architecture that goes beyond black-box prediction, a structured workflow for combining heterogeneous urban data streams, and a practical design for transforming environmental forecasts into public-health-relevant signals. This combination addresses empirical, methodological, and translational gaps identified in the literature review.
+
+\section{Expected Results}\label{sec:expected}
+
+Several results are expected from the proposed study. First, TFT is expected to outperform conventional statistical baselines and remain competitive with or superior to other deep learning approaches because of its ability to represent nonlinear temporal dependencies and heterogeneous covariates. Second, the multi-agent architecture is expected to improve modularity, scalability, and maintainability of the forecasting workflow, which is important for city-level deployment and future extension to multiple urban locations.
+
+Third, the interpretability mechanisms of TFT are expected to reveal meaningful feature patterns, such as the relative importance of meteorological drivers, heating season effects, and lagged pollutant dependence. These findings could provide additional scientific value beyond predictive performance alone. Fourth, the health risk module is expected to demonstrate that pollutant forecasting can be translated into clearer and more actionable decision outputs, such as exceedance warnings or risk levels for vulnerable populations.
+
+Overall, the study is expected to show that an interpretable MAS--TFT framework can serve as a viable foundation for urban air quality early warning and health-oriented environmental analytics in Kazakhstan.
+
+\section{Conclusion}\label{sec:conclusion}
+
+This article has transformed the initial literature review into a near-ready research paper structure for a study on a multi-agent system with TFT for urban air quality forecasting and health risk assessment in Kazakhstan. The reviewed literature indicates that Kazakhstan faces a substantial urban air pollution burden, that transformer-based forecasting methods provide promising technical capabilities, and that MAS concepts can support distributed monitoring and operational coordination. At the same time, the review highlights a clear gap at the intersection of these areas.
+
+The proposed study addresses that gap by combining interpretable forecasting, coordinated data and task management, and health-oriented decision support in a single framework. With further refinement of datasets, journal targeting, and implementation details, this manuscript can serve as the foundation for a full empirical article suitable for development in Overleaf and later submission.
+
+\backmatter
+
+\bmhead{Acknowledgments}
+
+This file is a project draft prepared for further refinement, journal targeting, and expansion of the reference base.
+
+\bmhead{Data Availability}
+
+No new datasets were generated for this literature review draft.
+
+\bibliography{kz-air-quality-review-bib}
+
+\end{document}

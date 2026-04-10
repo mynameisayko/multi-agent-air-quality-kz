@@ -43,3 +43,11 @@ reports/*
 
 # Logs
 *.log
+lightning_logs/
+
+# Archives and generated bundles
+*.zip
+
+# Local template source package; upload-ready article files are kept in manuscript/overleaf-upload
+Download+the+journal+article+template+package+(December+2024+version) (1)/
+*.pdf
