@@ -47,7 +47,6 @@ def regression_metrics(actual: np.ndarray, predicted: np.ndarray) -> dict[str, f
     return {
         "mae": float(mean_absolute_error(actual, predicted)),
         "rmse": float(np.sqrt(mean_squared_error(actual, predicted))),
-        "mape": float(np.mean(np.abs((actual - predicted) / np.clip(actual, 1e-6, None))) * 100.0),
     }
 
 

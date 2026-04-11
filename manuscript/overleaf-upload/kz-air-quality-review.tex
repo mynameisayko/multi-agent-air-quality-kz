@@ -147,7 +147,7 @@ The risk module compares the class derived from the actual PM$_{2.5}$ value with
 
 \subsection{Evaluation strategy}\label{subsec:evaluation}
 
-Model performance should be evaluated with error metrics appropriate for regression forecasting, such as MAE, RMSE, and MAPE. MAE is used as the most directly interpretable metric because it reports the average absolute error in $\mu$g/m$^3$. RMSE is used because it penalizes large errors more strongly and is therefore sensitive to missed pollution peaks. MAPE is reported for comparability, but it should not be treated as the primary metric for PM$_{2.5}$ because percentage errors become unstable when observed concentrations are low.
+Model performance should be evaluated with error metrics appropriate for regression forecasting, primarily MAE and RMSE. MAE is used as the most directly interpretable metric because it reports the average absolute error in $\mu$g/m$^3$. RMSE is used because it penalizes large errors more strongly and is therefore sensitive to missed pollution peaks. Percentage-based error metrics are not used as primary indicators because PM$_{2.5}$ can have very low observed values, making percentage errors unstable and potentially misleading.
 
 Because the application includes health-risk warnings, classification-oriented metrics are also required. These include risk accuracy, macro F1-score across all risk categories, and binary precision, recall, and F1-score for unhealthy-or-worse episodes. The study should also evaluate operational value rather than accuracy alone. This means examining whether the system improves early identification of hazardous episodes, whether it preserves stable performance across stations and cities, and whether its outputs are understandable enough to support environmental and public-health decisions.
 
@@ -170,7 +170,7 @@ Multi-city station TFT & Kazakhstan station-level & Hourly PM$_{2.5}$, station m
 \end{tabular}
 \end{table}
 
-The pilot results suggest three preliminary findings. First, moving from daily to hourly data improved absolute forecasting performance because the model could capture intraday variation, lagged hourly dependence, and weekly cycles. Second, adding weather variables improved MAE and RMSE in the Almaty hourly experiment, although MAPE remained high because percentage error is unstable when PM$_{2.5}$ concentrations are low. Third, the station-level multi-city formulation produced the best current MAE and RMSE, suggesting that learning across multiple monitoring stations can improve the representation of urban PM$_{2.5}$ dynamics compared with a single city-level aggregate.
+The pilot results suggest three preliminary findings. First, moving from daily to hourly data improved absolute forecasting performance because the model could capture intraday variation, lagged hourly dependence, and weekly cycles. Second, adding weather variables improved MAE and RMSE in the Almaty hourly experiment. Third, the station-level multi-city formulation produced the best current MAE and RMSE among the TFT variants, suggesting that learning across multiple monitoring stations can improve the representation of urban PM$_{2.5}$ dynamics compared with a single city-level aggregate.
 
 \begin{table}[h]
 \caption{Metrics used in the forecasting and health-risk evaluation.}\label{tab:metrics}
@@ -180,7 +180,6 @@ Metric & Task & Interpretation\\
 \midrule
 MAE & Regression & Average absolute error in $\mu$g/m$^3$; primary accuracy metric\\
 RMSE & Regression & Penalizes large errors and missed peaks more strongly than MAE\\
-MAPE & Regression & Percentage error; reported for comparison but unstable at low PM$_{2.5}$\\
 Risk accuracy & Classification & Share of correctly predicted risk classes\\
 Macro F1 & Classification & Balanced F1-score across safe, moderate, unhealthy, hazardous classes\\
 Unhealthy recall & Warning & Ability to detect unhealthy-or-worse events\\
@@ -191,23 +190,23 @@ Unhealthy F1 & Warning & Balance between false alarms and missed unhealthy event
 
 The full multi-city station-level model is currently in progress. This experiment uses AirData.kz hourly PM$_{2.5}$ observations from Almaty, Astana, Karaganda, and other Kazakhstani monitoring locations. Unlike the city-level pilot models, it treats each station as a separate time series and uses station identity, city, latitude, and longitude as static covariates. The experiment is designed to evaluate whether a shared TFT model can generalize across urban monitoring stations and provide both concentration forecasts and health-risk warnings. Because this run is computationally heavier, it is intended to be trained on GPU-enabled notebook environments such as Kaggle. Final multi-city results should be reported only after a complete run produces the model checkpoint, forecast file, and metrics file.
 
-The first completed multi-city station-level evaluation used 12 station-level time series and 150,842 hourly observations. The model achieved MAE of 11.62 $\mu$g/m$^3$, RMSE of 17.62 $\mu$g/m$^3$, and MAPE of 64.78\%. For the health-risk layer, the model achieved risk accuracy of 0.674, macro F1-score of 0.440, unhealthy-or-worse precision of 1.000, unhealthy-or-worse recall of 0.676, and unhealthy-or-worse F1-score of 0.807. These preliminary results indicate that the model is conservative when issuing unhealthy-or-worse warnings: predicted unhealthy events were correct in this test window, but the model still missed approximately one third of actual unhealthy-or-worse events. Therefore, future tuning should prioritize improving unhealthy recall while preserving acceptable precision.
+The first completed multi-city station-level evaluation used 12 station-level time series and 150,842 hourly observations. The model achieved MAE of 11.62 $\mu$g/m$^3$ and RMSE of 17.62 $\mu$g/m$^3$. For the health-risk layer, the model achieved risk accuracy of 0.674, macro F1-score of 0.440, unhealthy-or-worse precision of 1.000, unhealthy-or-worse recall of 0.676, and unhealthy-or-worse F1-score of 0.807. These preliminary results indicate that the model is conservative when issuing unhealthy-or-worse warnings: predicted unhealthy events were correct in this test window, but the model still missed approximately one third of actual unhealthy-or-worse events. Therefore, future tuning should prioritize improving unhealthy recall while preserving acceptable precision.
 
 \begin{table}[h]
-\caption{Preliminary model comparison on the shared XGBoost--TFT test overlap. Lower MAE, RMSE, and MAPE indicate better performance.}\label{tab:baseline_comparison}
+\caption{Preliminary model comparison on the shared XGBoost--TFT test overlap. Lower MAE and RMSE indicate better performance.}\label{tab:baseline_comparison}
 \begin{tabular}{@{}llll@{}}
 \toprule
-Model & MAE & RMSE & MAPE\\
+Model & MAE & RMSE\\
 \midrule
-TFT & 14.42 & 20.05 & 66.83\\
-XGBoost direct 24h & 8.05 & 11.37 & 71.48\\
-Persistence 24h & 7.97 & 12.65 & 71.65\\
-Rolling mean 24h & 10.77 & 14.72 & 109.39\\
+TFT & 14.42 & 20.05\\
+XGBoost direct 24h & 8.05 & 11.37\\
+Persistence 24h & 7.97 & 12.65\\
+Rolling mean 24h & 10.77 & 14.72\\
 \botrule
 \end{tabular}
 \end{table}
 
-The baseline comparison shows that the current TFT checkpoint does not yet outperform simpler baselines in MAE and RMSE on this short test window. The direct 24-hour XGBoost model substantially improves over TFT in absolute-error metrics and achieves the best RMSE among the compared baselines, while persistence remains slightly better in MAE. This is a useful diagnostic result rather than a failure of the overall framework: it indicates that the current neural model is under-tuned for absolute concentration accuracy, while the risk layer already provides a meaningful warning-oriented signal. The next experimental stage should therefore include longer training, wider hyperparameter search, station-specific error analysis, weather forecast covariates, and additional machine-learning baselines before making a final performance claim.
+The full TFT checkpoint metrics above are computed on the complete exported TFT test set. The baseline table is computed on a smaller shared comparison subset where TFT, XGBoost, persistence, and rolling-mean predictions are all available for the same station--timestamp pairs. Therefore, the TFT value in Table~\ref{tab:baseline_comparison} differs from the full TFT metric reported in the previous paragraph. On this shared subset, the current TFT checkpoint does not yet outperform simpler baselines in MAE and RMSE. The direct 24-hour XGBoost model substantially improves over TFT in absolute-error metrics and achieves the best RMSE among the compared baselines, while persistence remains slightly better in MAE. This is a useful diagnostic result rather than a failure of the overall framework: it indicates that the current neural model is under-tuned for absolute concentration accuracy, while the risk layer already provides a meaningful warning-oriented signal. The next experimental stage should therefore include longer training, wider hyperparameter search, station-specific error analysis, weather forecast covariates, and additional machine-learning baselines before making a final performance claim.
 
 \begin{figure}[h]
 \centering
@@ -236,7 +235,7 @@ The preliminary experiments indicate that temporal resolution is a major factor 
 
 The station-level multi-city model further improved absolute-error metrics compared with the Almaty city-level pilots. This suggests that a shared model can benefit from learning across multiple monitoring stations while still preserving local differences through station and city identifiers. The result supports the methodological choice to model each station as a separate time series rather than reducing each city to a single average concentration. However, the imported baseline comparison also shows that XGBoost and simple persistence currently outperform the TFT checkpoint in MAE and RMSE on the short test window. Therefore, the current result should be interpreted as a preliminary implementation milestone rather than a final claim of model superiority.
 
-MAPE remained comparatively high across hourly experiments. This does not necessarily mean that the model is unusable; rather, MAPE is sensitive to low observed PM$_{2.5}$ values. When actual concentrations are small, even a small absolute error can become a large percentage error. For this reason, MAE and RMSE are more reliable primary metrics for concentration forecasting, while risk-oriented metrics are more appropriate for evaluating warning performance.
+The evaluation focuses on MAE and RMSE rather than percentage error. This choice is important for PM$_{2.5}$ because observed concentrations can be close to zero during cleaner hours, making percentage-based metrics unstable. MAE provides a direct estimate of the average concentration error, while RMSE highlights larger misses during pollution peaks. For the public-health component, risk-oriented metrics are more appropriate for evaluating warning performance than percentage-based regression errors.
 
 The health-risk evaluation shows a meaningful but incomplete warning capability. The preliminary multi-city model achieved unhealthy-or-worse precision of 1.000 and recall of 0.676. This means that the model was highly conservative: predicted unhealthy warnings were correct in the evaluated window, but some true unhealthy-or-worse events were missed. From a public-health perspective, future tuning should prioritize recall, because missing hazardous episodes may be more harmful than issuing some false warnings. Possible improvements include threshold calibration, longer training, more stations, weather forecast covariates, and direct optimization of warning-oriented objectives.
 

@@ -126,8 +126,7 @@ def save_dataframe(df: pd.DataFrame, path: Path) -> None:
 def evaluate_predictions(actual: np.ndarray, predicted: np.ndarray) -> dict[str, float]:
     mae = float(np.mean(np.abs(actual - predicted)))
     rmse = float(np.sqrt(np.mean((actual - predicted) ** 2)))
-    mape = float(np.mean(np.abs((actual - predicted) / np.clip(actual, 1e-6, None))) * 100.0)
-    return {"mae": mae, "rmse": rmse, "mape": mape}
+    return {"mae": mae, "rmse": rmse}
 
 
 def main() -> None:

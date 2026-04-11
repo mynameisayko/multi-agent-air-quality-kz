@@ -21,7 +21,6 @@ def regression_metrics(actual: np.ndarray, predicted: np.ndarray) -> dict[str, f
     return {
         "mae": float(np.mean(np.abs(actual - predicted))),
         "rmse": float(np.sqrt(np.mean((actual - predicted) ** 2))),
-        "mape": float(np.mean(np.abs((actual - predicted) / np.clip(actual, 1e-6, None))) * 100.0),
     }
 
 
@@ -106,7 +105,7 @@ def plot_model_comparison(table: pd.DataFrame, out_dir: Path) -> None:
     plt.bar(x + width / 2, table["rmse"], width, label="RMSE")
     plt.xticks(x, table["model"], rotation=20, ha="right")
     plt.ylabel("Error, ug/m3")
-    plt.title("TFT vs simple baselines")
+    plt.title("Forecasting model comparison")
     plt.legend()
     plt.tight_layout()
     plt.savefig(out_dir / "baseline_model_comparison.png", dpi=200)

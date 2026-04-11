@@ -43,12 +43,14 @@ To make the evaluation more rigorous, three baseline models were added:
 
 On the shared XGBoost-TFT test overlap, the current comparison is:
 
-| Model | MAE | RMSE | MAPE |
-|---|---:|---:|---:|
-| TFT | 14.42 | 20.05 | 66.83 |
-| XGBoost direct 24h | 8.05 | 11.37 | 71.48 |
-| Persistence 24h | 7.97 | 12.65 | 71.65 |
-| Rolling mean 24h | 10.77 | 14.72 | 109.39 |
+| Model | MAE | RMSE |
+|---|---:|---:|
+| TFT | 14.42 | 20.05 |
+| XGBoost direct 24h | 8.05 | 11.37 |
+| Persistence 24h | 7.97 | 12.65 |
+| Rolling mean 24h | 10.77 | 14.72 |
+
+The full exported TFT test result is MAE 11.62 and RMSE 17.62 on the complete TFT test file. The table above uses a smaller shared overlap where TFT, XGBoost, persistence, and rolling-mean predictions are all available for the same station-time pairs. Therefore, the TFT value in the comparison table is different from the full TFT metric.
 
 This means that the current TFT checkpoint does not yet outperform XGBoost or persistence in MAE/RMSE. This is an important preliminary finding. It suggests that the TFT model is not fully tuned yet, while XGBoost is already strong because it directly uses engineered lag and rolling features.
 
