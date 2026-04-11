@@ -29,7 +29,7 @@
 
 \affil*[1]{\orgdiv{Department}, \orgname{University}, \orgaddress{\city{City}, \country{Kazakhstan}}}
 
-\abstract{Urban air pollution remains a major environmental and public health challenge in Kazakhstan, especially in cities affected by coal combustion, traffic emissions, industrial activities, and adverse meteorological conditions. Existing studies in Kazakhstan mainly focus on pollutant characterization, source apportionment, and retrospective health burden estimation, while operational forecasting and health-oriented decision support remain underdeveloped. This article presents a study design for an interpretable multi-agent system with Temporal Fusion Transformer for station-level, multi-city PM$_{2.5}$ forecasting and health risk assessment in Kazakhstan. The proposed framework uses publicly available AirData.kz observations from Almaty, Astana, Karaganda, and other Kazakhstani locations, organizes each monitoring station as a separate time series, and maps predicted PM$_{2.5}$ concentrations into risk classes: safe, moderate, unhealthy, and hazardous. The article synthesizes the relevant literature, formulates the research gap, defines the methodological design, states the research questions, and outlines the expected scientific and practical contributions. The study is intended to support early warning, improve interpretability in air quality forecasting, and connect environmental prediction with public-health-oriented analytics.}
+\abstract{Urban air pollution remains a major environmental and public health challenge in Kazakhstan, especially in cities affected by coal combustion, traffic emissions, industrial activities, and adverse meteorological conditions. Existing studies in Kazakhstan mainly focus on pollutant characterization, source apportionment, and retrospective health burden estimation, while operational forecasting and health-oriented decision support remain underdeveloped. This article presents a study design and preliminary implementation of an interpretable multi-agent system with Temporal Fusion Transformer for station-level, multi-city PM$_{2.5}$ forecasting and health risk assessment in Kazakhstan. The framework uses publicly available AirData.kz observations from Almaty, Astana, Karaganda, and other Kazakhstani locations, organizes each monitoring station as a separate time series, and maps predicted PM$_{2.5}$ concentrations into risk classes: safe, moderate, unhealthy, and hazardous. Preliminary experiments show that the best station-level multi-city TFT model achieved MAE of 11.62 $\mu$g/m$^3$ and RMSE of 17.62 $\mu$g/m$^3$ for 24-hour PM$_{2.5}$ forecasting, while the health-risk layer achieved an unhealthy-or-worse F1-score of 0.807. The study is intended to support early warning, improve interpretability in air quality forecasting, and connect environmental prediction with public-health-oriented analytics.}
 
 \keywords{air quality forecasting, Temporal Fusion Transformer, multi-agent systems, health risk assessment, Kazakhstan, PM$_{2.5}$}
 
@@ -109,6 +109,13 @@ The proposed MAS architecture contains several functional agents. A data acquisi
 
 This architecture is aligned with prior MAS literature on environmental monitoring \cite{dragomir2013mas,zhu2021multisensing}, but it extends earlier frameworks by placing an interpretable transformer model at the core of the predictive pipeline and by treating health risk estimation as a first-class system component rather than as a separate post-processing step. In implementation terms, the current system is modularized into scripts for data downloading, training, risk mapping, and evaluation, which can later be converted into independent software agents.
 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/architecture_mas_tft.png}
+\caption{Proposed multi-agent TFT framework for PM$_{2.5}$ forecasting and health-risk assessment.}
+\label{fig:architecture}
+\end{figure}
+
 \subsection{Forecasting model}\label{subsec:forecasting_model}
 
 TFT is used as the main predictive model because it can jointly handle static information, time-varying known inputs, and time-varying observed inputs while preserving interpretability through attention and variable selection mechanisms \cite{lim2021tft}. The current implementation forecasts PM$_{2.5}$ for the next 24 hours using a 168-hour encoder window. This configuration allows the model to use recent hourly dynamics as well as weekly cyclic behavior. The station-level formulation uses the combined station--city identifier as the grouping variable, so the model learns across many related time series rather than fitting one independent model per station.
@@ -129,25 +136,26 @@ Model performance should be evaluated with error metrics appropriate for regress
 
 Because the application includes health-risk warnings, classification-oriented metrics are also required. These include risk accuracy, macro F1-score across all risk categories, and binary precision, recall, and F1-score for unhealthy-or-worse episodes. The study should also evaluate operational value rather than accuracy alone. This means examining whether the system improves early identification of hazardous episodes, whether it preserves stable performance across stations and cities, and whether its outputs are understandable enough to support environmental and public-health decisions.
 
-\section{Pilot Experiments and Current Implementation Status}\label{sec:pilot}
+\section{Pilot Experiments and Preliminary Results}\label{sec:pilot}
 
 Before the full multi-city station-level experiment, several pilot models were trained to validate the feasibility of the approach and to compare the effect of temporal resolution and weather covariates. These experiments used the same general TFT framework but differed in data aggregation level, input variables, and prediction setting. The pilot stage is important because it demonstrates that the pipeline can run end-to-end before scaling to a larger Kazakhstan-wide station-level model.
 
 \begin{table}[h]
-\caption{Pilot TFT experiments completed before the full multi-city station-level run. Lower MAE and RMSE indicate better absolute forecasting accuracy.}\label{tab:pilot_models}
-\begin{tabular}{@{}lllll@{}}
+\caption{TFT experiments completed in the current project stage. Lower MAE and RMSE indicate better absolute forecasting accuracy.}\label{tab:pilot_models}
+\begin{tabular}{@{}llllll@{}}
 \toprule
-Experiment & Scope & Main inputs & MAE & RMSE\\
+Experiment & Scope & Main inputs & MAE & RMSE & Status\\
 \midrule
-Daily TFT & Almaty city-level & Daily PM$_{2.5}$ and pollutant covariates & 20.27 & 25.03\\
-Daily TFT + weather & Almaty city-level & Daily PM$_{2.5}$, pollutants, weather & 19.18 & 22.73\\
-Hourly TFT & Almaty city-level & Hourly PM$_{2.5}$, lags, rolling features & 16.60 & 20.87\\
-Hourly TFT + weather & Almaty city-level & Hourly PM$_{2.5}$, weather, temporal features & 15.02 & 19.61\\
+Daily TFT & Almaty city-level & Daily PM$_{2.5}$ and pollutant covariates & 20.27 & 25.03 & Completed\\
+Daily TFT + weather & Almaty city-level & Daily PM$_{2.5}$, pollutants, weather & 19.18 & 22.73 & Completed\\
+Hourly TFT & Almaty city-level & Hourly PM$_{2.5}$, lags, rolling features & 16.60 & 20.87 & Completed\\
+Hourly TFT + weather & Almaty city-level & Hourly PM$_{2.5}$, weather, temporal features & 15.02 & 19.61 & Completed\\
+Multi-city station TFT & Kazakhstan station-level & Hourly PM$_{2.5}$, station metadata, temporal features & 11.62 & 17.62 & Preliminary\\
 \botrule
 \end{tabular}
 \end{table}
 
-The pilot results suggest two preliminary findings. First, moving from daily to hourly data improved absolute forecasting performance because the model could capture intraday variation, lagged hourly dependence, and weekly cycles. Second, adding weather variables improved MAE and RMSE in the Almaty hourly experiment, although MAPE remained high because percentage error is unstable when PM$_{2.5}$ concentrations are low. Therefore, the main comparison should emphasize MAE and RMSE for concentration forecasting, while health-risk evaluation should emphasize recall and F1-score for unhealthy-or-worse events.
+The pilot results suggest three preliminary findings. First, moving from daily to hourly data improved absolute forecasting performance because the model could capture intraday variation, lagged hourly dependence, and weekly cycles. Second, adding weather variables improved MAE and RMSE in the Almaty hourly experiment, although MAPE remained high because percentage error is unstable when PM$_{2.5}$ concentrations are low. Third, the station-level multi-city formulation produced the best current MAE and RMSE, suggesting that learning across multiple monitoring stations can improve the representation of urban PM$_{2.5}$ dynamics compared with a single city-level aggregate.
 
 \begin{table}[h]
 \caption{Metrics used in the forecasting and health-risk evaluation.}\label{tab:metrics}
@@ -168,6 +176,41 @@ Unhealthy F1 & Warning & Balance between false alarms and missed unhealthy event
 
 The full multi-city station-level model is currently in progress. This experiment uses AirData.kz hourly PM$_{2.5}$ observations from Almaty, Astana, Karaganda, and other Kazakhstani monitoring locations. Unlike the city-level pilot models, it treats each station as a separate time series and uses station identity, city, latitude, and longitude as static covariates. The experiment is designed to evaluate whether a shared TFT model can generalize across urban monitoring stations and provide both concentration forecasts and health-risk warnings. Because this run is computationally heavier, it is intended to be trained on GPU-enabled notebook environments such as Kaggle. Final multi-city results should be reported only after a complete run produces the model checkpoint, forecast file, and metrics file.
 
+The first completed multi-city station-level evaluation used 12 station-level time series and 150,842 hourly observations. The model achieved MAE of 11.62 $\mu$g/m$^3$, RMSE of 17.62 $\mu$g/m$^3$, and MAPE of 64.78\%. For the health-risk layer, the model achieved risk accuracy of 0.674, macro F1-score of 0.440, unhealthy-or-worse precision of 1.000, unhealthy-or-worse recall of 0.676, and unhealthy-or-worse F1-score of 0.807. These preliminary results indicate that the model is conservative when issuing unhealthy-or-worse warnings: predicted unhealthy events were correct in this test window, but the model still missed approximately one third of actual unhealthy-or-worse events. Therefore, future tuning should prioritize improving unhealthy recall while preserving acceptable precision.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/actual_vs_predicted_pm25.png}
+\caption{Actual and predicted PM$_{2.5}$ values for a representative station-level forecast window.}
+\label{fig:actual_predicted}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.72\textwidth]{figures/risk_confusion_matrix.png}
+\caption{Confusion matrix for predicted and observed health-risk classes.}
+\label{fig:risk_confusion}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\textwidth]{figures/baseline_model_comparison.png}
+\caption{Comparison between TFT and simple baseline models. This figure is regenerated after importing Kaggle forecast outputs.}
+\label{fig:baseline_comparison}
+\end{figure}
+
+\section{Discussion}\label{sec:discussion}
+
+The preliminary experiments indicate that temporal resolution is a major factor in forecasting performance. Hourly models achieved lower MAE and RMSE than daily models because they preserve intraday pollution dynamics, short-term accumulation patterns, and lagged effects that are smoothed in daily averages. This is particularly relevant for PM$_{2.5}$, where short-lived peaks may be important for both exposure assessment and early warning.
+
+The station-level multi-city model further improved absolute-error metrics compared with the Almaty city-level pilots. This suggests that a shared model can benefit from learning across multiple monitoring stations while still preserving local differences through station and city identifiers. The result supports the methodological choice to model each station as a separate time series rather than reducing each city to a single average concentration. However, this finding should be treated as preliminary until additional baseline models and longer test windows are evaluated.
+
+MAPE remained comparatively high across hourly experiments. This does not necessarily mean that the model is unusable; rather, MAPE is sensitive to low observed PM$_{2.5}$ values. When actual concentrations are small, even a small absolute error can become a large percentage error. For this reason, MAE and RMSE are more reliable primary metrics for concentration forecasting, while risk-oriented metrics are more appropriate for evaluating warning performance.
+
+The health-risk evaluation shows a meaningful but incomplete warning capability. The preliminary multi-city model achieved unhealthy-or-worse precision of 1.000 and recall of 0.676. This means that the model was highly conservative: predicted unhealthy warnings were correct in the evaluated window, but some true unhealthy-or-worse events were missed. From a public-health perspective, future tuning should prioritize recall, because missing hazardous episodes may be more harmful than issuing some false warnings. Possible improvements include threshold calibration, longer training, more stations, weather forecast covariates, and direct optimization of warning-oriented objectives.
+
+Several limitations remain. First, the current multi-city model uses PM$_{2.5}$ and temporal features but does not yet include forecast meteorology across all cities. Second, the current results are preliminary and should be compared against persistence, rolling-average, and machine-learning baselines. Third, the risk classes are threshold-based proxies rather than epidemiological estimates of individual health outcomes. Fourth, the computational cost of full station-level training requires GPU resources, which may limit reproducibility unless experiments are carefully documented and exported.
+
 \section{Research Questions}\label{sec:rq}
 
 The proposed study is guided by the following research questions:
@@ -186,13 +229,13 @@ The expected contribution of the study is threefold. First, it provides an empir
 
 More specifically, the article aims to contribute an interpretable architecture that goes beyond black-box prediction, a structured workflow for combining station-level urban data streams, and a practical design for transforming environmental forecasts into public-health-relevant signals. The reproducible implementation includes scripts for downloading public Kazakhstan PM$_{2.5}$ data, training TFT models, generating PM$_{2.5}$ forecasts, deriving risk labels, and exporting results for analysis. This combination addresses empirical, methodological, and translational gaps identified in the literature review.
 
-\section{Expected Results}\label{sec:expected}
+\section{Expected Results and Future Work}\label{sec:expected}
 
 Several results are expected from the proposed study. First, TFT is expected to outperform simple persistence and rolling-average baselines and remain competitive with other deep learning approaches because of its ability to represent nonlinear temporal dependencies and heterogeneous covariates. Second, the station-level multi-city architecture is expected to improve coverage and scalability compared with a single aggregated city-level model, which is important for Kazakhstan-wide environmental analytics.
 
 Third, the interpretability mechanisms of TFT are expected to reveal meaningful feature patterns, such as the relative importance of hourly cycles, weekly cycles, heating-season effects, station identity, and lagged pollutant dependence. These findings could provide additional scientific value beyond predictive performance alone. Fourth, the health risk module is expected to demonstrate that pollutant forecasting can be translated into clearer and more actionable decision outputs, such as exceedance warnings or risk levels for vulnerable populations.
 
-Overall, the study is expected to show that an interpretable MAS--TFT framework can serve as a viable foundation for urban air quality early warning and health-oriented environmental analytics in Kazakhstan.
+Overall, the study is expected to show that an interpretable MAS--TFT framework can serve as a viable foundation for urban air quality early warning and health-oriented environmental analytics in Kazakhstan. Immediate future work includes completing baseline comparisons, importing full Kaggle forecast outputs into the manuscript figures, adding multi-city meteorological covariates, and performing interpretability analysis using TFT variable-importance and attention outputs.
 
 \section{Conclusion}\label{sec:conclusion}
 
