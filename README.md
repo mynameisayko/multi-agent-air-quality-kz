@@ -12,6 +12,12 @@ Private research workspace for code, manuscript drafting, experiments, and proje
 - `reports/` for outputs and presentations
 - `docs/` for collaboration and project decisions
 
+## Current project report
+
+For a short English summary of the current implementation, trained models, baseline comparison, and next steps, see:
+
+- `docs/supervisor_progress_report.md`
+
 ## Collaboration model
 
 Use the Git repository for:
