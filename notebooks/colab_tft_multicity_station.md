@@ -15,6 +15,13 @@ In Colab:
 !pip install lightning pytorch-forecasting scikit-learn pandas numpy
 ```
 
+## 2.1 Mount Google Drive for persistent outputs
+
+```python
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
 ## 3. Upload or clone project
 
 Option A: upload the project folder to Google Drive and mount it.
@@ -48,23 +55,25 @@ Option B: clone from GitHub after you push the private repository.
   --attention-head-size 4 \
   --dropout 0.1 \
   --learning-rate 0.01 \
-  --batch-size 256
+  --batch-size 256 \
+  --export-dir /content/drive/MyDrive/air-quality-kz-results
 ```
 
 ## 6. Hyperparameter tuning candidates
 
 Run these one by one and compare `reports/tft_kz_multicity_station/metrics.json`.
+The `--export-dir` option copies the latest report folder, checkpoint folder, and processed data to Google Drive.
 
 ```bash
-!python src/train_tft_multicity_station.py --start 2023-01-01 --max-stations-per-city 15 --max-epochs 30 --hidden-size 32 --attention-head-size 4 --dropout 0.1 --learning-rate 0.005 --batch-size 256
+!python src/train_tft_multicity_station.py --start 2023-01-01 --max-stations-per-city 15 --max-epochs 30 --hidden-size 32 --attention-head-size 4 --dropout 0.1 --learning-rate 0.005 --batch-size 256 --export-dir /content/drive/MyDrive/air-quality-kz-results
 ```
 
 ```bash
-!python src/train_tft_multicity_station.py --start 2023-01-01 --max-stations-per-city 15 --max-epochs 30 --hidden-size 64 --attention-head-size 4 --dropout 0.15 --learning-rate 0.005 --batch-size 256
+!python src/train_tft_multicity_station.py --start 2023-01-01 --max-stations-per-city 15 --max-epochs 30 --hidden-size 64 --attention-head-size 4 --dropout 0.15 --learning-rate 0.005 --batch-size 256 --export-dir /content/drive/MyDrive/air-quality-kz-results
 ```
 
 ```bash
-!python src/train_tft_multicity_station.py --start 2022-01-01 --max-stations-per-city 20 --max-epochs 40 --hidden-size 64 --attention-head-size 8 --dropout 0.2 --learning-rate 0.003 --batch-size 256
+!python src/train_tft_multicity_station.py --start 2022-01-01 --max-stations-per-city 20 --max-epochs 40 --hidden-size 64 --attention-head-size 8 --dropout 0.2 --learning-rate 0.003 --batch-size 256 --export-dir /content/drive/MyDrive/air-quality-kz-results
 ```
 
 ## 7. Main outputs

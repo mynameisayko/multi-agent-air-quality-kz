@@ -4,6 +4,11 @@ Use `T4 GPU`, not TPU, for this project.
 
 ## Setup
 
+```python
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
 ```bash
 !git clone <YOUR_PRIVATE_REPO_URL>
 %cd multi-agent-air-quality-kz
@@ -27,7 +32,8 @@ Use `T4 GPU`, not TPU, for this project.
   --attention-head-size 4 \
   --dropout 0.1 \
   --learning-rate 0.01 \
-  --batch-size 256
+  --batch-size 256 \
+  --export-dir /content/drive/MyDrive/air-quality-kz-results
 ```
 
 ## Outputs
@@ -35,3 +41,10 @@ Use `T4 GPU`, not TPU, for this project.
 - `reports/tft_kz_multicity_station/metrics.json`
 - `reports/tft_kz_multicity_station/test_forecast_with_risk.csv`
 - `models/tft_kz_multicity_station/tft-kz-station-best.ckpt`
+
+The same outputs will be copied to Google Drive:
+
+- `/content/drive/MyDrive/air-quality-kz-results/tft_kz_multicity_station`
+- `/content/drive/MyDrive/air-quality-kz-results/reports_tft_kz_multicity_station`
+- `/content/drive/MyDrive/air-quality-kz-results/models_tft_kz_multicity_station`
+- `/content/drive/MyDrive/air-quality-kz-results/kz_multicity_station_hourly_pm25.csv`

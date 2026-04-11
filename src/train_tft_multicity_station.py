@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -167,6 +168,21 @@ def evaluate(actual: np.ndarray, predicted: np.ndarray) -> dict[str, float]:
     }
 
 
+def export_results(export_dir: Path, report_dir: Path, model_dir: Path, processed_path: Path) -> None:
+    export_dir.mkdir(parents=True, exist_ok=True)
+    destinations = {
+        report_dir: export_dir / f"reports_{report_dir.name}",
+        model_dir: export_dir / f"models_{model_dir.name}",
+    }
+    for source, destination in destinations.items():
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.copytree(source, destination)
+
+    data_destination = export_dir / processed_path.name
+    shutil.copy2(processed_path, data_destination)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--start", default="2023-01-01")
@@ -181,6 +197,11 @@ def main() -> None:
     parser.add_argument("--learning-rate", type=float, default=0.01)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--interpolation-limit", type=int, default=3)
+    parser.add_argument(
+        "--export-dir",
+        default=None,
+        help="Optional directory for copying reports, checkpoints, and processed data. Use a Google Drive path in Colab.",
+    )
     args = parser.parse_args()
 
     seed_everything(42, workers=True)
@@ -274,6 +295,14 @@ def main() -> None:
         }
     )
     (REPORT_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+
+    if args.export_dir:
+        export_path = Path(args.export_dir)
+        export_results(export_path, REPORT_DIR, MODEL_DIR, processed_path)
+        metrics["export_dir"] = str(export_path.resolve())
+        (REPORT_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+        shutil.copy2(REPORT_DIR / "metrics.json", export_path / f"reports_{REPORT_DIR.name}" / "metrics.json")
+
     print(json.dumps(metrics, indent=2))
 
 
