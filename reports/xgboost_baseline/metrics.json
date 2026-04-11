@@ -1,0 +1,32 @@
+{
+  "mae": 8.049877301437741,
+  "rmse": 11.371512758036443,
+  "mape": 71.47633107487621,
+  "risk_accuracy": 0.7351598173515982,
+  "risk_macro_f1": 0.7389966719078137,
+  "unhealthy_precision": 0.782608695652174,
+  "unhealthy_recall": 0.7659574468085106,
+  "unhealthy_f1": 0.7741935483870968,
+  "model": "XGBoost direct 24h",
+  "horizon_hours": 24,
+  "train_rows": 127536,
+  "test_rows": 219,
+  "comparison_rows": 219,
+  "series_count": 10,
+  "args": {
+    "processed": "C:\\Users\\User\\multi-agent-air-quality-kz\\data\\processed\\kz_multicity_station_hourly_pm25.csv",
+    "tft_forecast": "C:\\Users\\User\\multi-agent-air-quality-kz\\reports\\tft_kz_multicity_station\\test_forecast_with_risk.csv",
+    "output_dir": "C:\\Users\\User\\multi-agent-air-quality-kz\\reports\\xgboost_baseline",
+    "horizon_hours": 24,
+    "n_estimators": 500,
+    "max_depth": 4,
+    "learning_rate": 0.03,
+    "subsample": 0.9,
+    "colsample_bytree": 0.9,
+    "min_child_weight": 3.0,
+    "reg_lambda": 2.0,
+    "tree_method": "hist",
+    "n_jobs": 0,
+    "seed": 42
+  }
+}

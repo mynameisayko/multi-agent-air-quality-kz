@@ -136,6 +136,7 @@ def main() -> None:
     parser.add_argument("--forecast", required=True, help="Path to test_forecast_with_risk.csv")
     parser.add_argument("--processed", required=True, help="Path to kz_multicity_station_hourly_pm25.csv")
     parser.add_argument("--metrics", default=None, help="Optional path to metrics.json")
+    parser.add_argument("--model-comparison", default=None, help="Optional model comparison CSV, for example XGBoost overlap results")
     args = parser.parse_args()
 
     ARTICLE_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
@@ -149,7 +150,11 @@ def main() -> None:
     forecast_with_baselines = build_baselines(processed, forecast)
     forecast_with_baselines.to_csv(ARTICLE_TABLES_DIR / "forecast_with_baselines.csv", index=False)
 
-    baseline_table = write_baseline_table(forecast_with_baselines, ARTICLE_TABLES_DIR)
+    if args.model_comparison:
+        baseline_table = pd.read_csv(args.model_comparison)
+        baseline_table.to_csv(ARTICLE_TABLES_DIR / "model_comparison.csv", index=False)
+    else:
+        baseline_table = write_baseline_table(forecast_with_baselines, ARTICLE_TABLES_DIR)
     plot_actual_vs_predicted(forecast_with_baselines, ARTICLE_FIGURES_DIR)
     plot_error_distribution(forecast_with_baselines, ARTICLE_FIGURES_DIR)
     plot_confusion_matrix(forecast_with_baselines, ARTICLE_FIGURES_DIR)
@@ -165,4 +170,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
