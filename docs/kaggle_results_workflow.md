@@ -44,7 +44,8 @@ python src/prepare_article_outputs.py ^
   --forecast reports/tft_kz_multicity_station/test_forecast_with_risk.csv ^
   --processed data/processed/kz_multicity_station_hourly_pm25.csv ^
   --metrics reports/tft_kz_multicity_station/metrics.json ^
-  --model-comparison reports/xgboost_baseline/model_comparison.csv
+  --model-comparison reports/xgboost_baseline/model_comparison.csv ^
+  --comparison-overlap reports/xgboost_baseline/comparison_forecast_overlap.csv
 ```
 
 Generated figures:

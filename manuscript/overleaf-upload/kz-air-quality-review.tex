@@ -211,21 +211,21 @@ The full TFT checkpoint metrics above are computed on the complete exported TFT 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.85\textwidth]{figures/actual_vs_predicted_pm25.png}
-\caption{Actual and predicted PM$_{2.5}$ values for a representative station-level forecast window.}
+\caption{Actual PM$_{2.5}$ values and 24-hour-ahead forecasts from TFT, XGBoost, and persistence for a representative station-level forecast window.}
 \label{fig:actual_predicted}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.72\textwidth]{figures/risk_confusion_matrix.png}
-\caption{Confusion matrix for predicted and observed health-risk classes.}
+\caption{Confusion matrices for observed health-risk classes versus TFT and XGBoost predicted risk classes on the shared comparison subset.}
 \label{fig:risk_confusion}
 \end{figure}
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.78\textwidth]{figures/baseline_model_comparison.png}
-\caption{Comparison between TFT, XGBoost, and simple baseline models on the imported Kaggle forecast output.}
+\caption{MAE and RMSE comparison between TFT, XGBoost, and simple baseline models on the shared comparison subset.}
 \label{fig:baseline_comparison}
 \end{figure}
 

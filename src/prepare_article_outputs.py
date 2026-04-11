@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 
-from risk import RISK_LABELS, add_risk_columns
+from risk import RISK_LABELS, add_risk_columns, pm25_risk_class
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -57,7 +57,26 @@ def write_baseline_table(forecast: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
     return table
 
 
-def plot_actual_vs_predicted(forecast: pd.DataFrame, out_dir: Path) -> None:
+def plot_actual_vs_predicted(forecast: pd.DataFrame, out_dir: Path, comparison: pd.DataFrame | None = None) -> None:
+    if comparison is not None:
+        sample_series = comparison["series_id"].value_counts().index[0]
+        sample = comparison[comparison["series_id"] == sample_series].sort_values("timestamp")
+
+        plt.figure(figsize=(10, 4))
+        plt.plot(sample["timestamp"], sample["actual_pm25"], label="Actual PM2.5", linewidth=2.2, color="#111111")
+        plt.plot(sample["timestamp"], sample["tft_predicted_pm25"], label="TFT", linewidth=1.8)
+        plt.plot(sample["timestamp"], sample["predicted_pm25"], label="XGBoost", linewidth=1.8)
+        plt.plot(sample["timestamp"], sample["persistence_24h"], label="Persistence 24h", linewidth=1.4, linestyle="--")
+        plt.title(f"Actual vs model forecasts for {sample_series}")
+        plt.xlabel("Timestamp")
+        plt.ylabel("PM2.5, ug/m3")
+        plt.legend()
+        plt.xticks(rotation=30, ha="right")
+        plt.tight_layout()
+        plt.savefig(out_dir / "actual_vs_predicted_pm25.png", dpi=200)
+        plt.close()
+        return
+
     sample_series = forecast["station_id"].value_counts().index[0]
     sample = forecast[forecast["station_id"] == sample_series].sort_values("timestamp")
 
@@ -74,7 +93,25 @@ def plot_actual_vs_predicted(forecast: pd.DataFrame, out_dir: Path) -> None:
     plt.close()
 
 
-def plot_error_distribution(forecast: pd.DataFrame, out_dir: Path) -> None:
+def plot_error_distribution(forecast: pd.DataFrame, out_dir: Path, comparison: pd.DataFrame | None = None) -> None:
+    if comparison is not None:
+        errors = [
+            np.abs(comparison["actual_pm25"] - comparison["tft_predicted_pm25"]),
+            np.abs(comparison["actual_pm25"] - comparison["predicted_pm25"]),
+            np.abs(comparison["actual_pm25"] - comparison["persistence_24h"]),
+            np.abs(comparison["actual_pm25"] - comparison["rolling_mean_24h"]),
+        ]
+        labels = ["TFT", "XGBoost", "Persistence", "Rolling mean"]
+        plt.figure(figsize=(8, 4))
+        plt.boxplot(errors, tick_labels=labels, showfliers=False)
+        plt.title("Absolute error distribution by model")
+        plt.ylabel("Absolute error, ug/m3")
+        plt.xticks(rotation=15, ha="right")
+        plt.tight_layout()
+        plt.savefig(out_dir / "error_distribution.png", dpi=200)
+        plt.close()
+        return
+
     plt.figure(figsize=(7, 4))
     plt.hist(forecast["absolute_error"], bins=30, color="#2f6f73", edgecolor="white")
     plt.title("Absolute error distribution")
@@ -85,7 +122,32 @@ def plot_error_distribution(forecast: pd.DataFrame, out_dir: Path) -> None:
     plt.close()
 
 
-def plot_confusion_matrix(forecast: pd.DataFrame, out_dir: Path) -> None:
+def plot_confusion_matrix(forecast: pd.DataFrame, out_dir: Path, comparison: pd.DataFrame | None = None) -> None:
+    if comparison is not None:
+        comparison = comparison.copy()
+        comparison["tft_risk"] = pm25_risk_class(comparison["tft_predicted_pm25"]).astype(str)
+        comparison["xgboost_risk"] = pm25_risk_class(comparison["predicted_pm25"]).astype(str)
+        labels = [
+            label
+            for label in RISK_LABELS
+            if label
+            in set(comparison["actual_risk"]) | set(comparison["tft_risk"]) | set(comparison["xgboost_risk"])
+        ]
+        fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
+        for ax, predicted_col, title in [
+            (axes[0], "tft_risk", "TFT risk classes"),
+            (axes[1], "xgboost_risk", "XGBoost risk classes"),
+        ]:
+            matrix = confusion_matrix(comparison["actual_risk"], comparison[predicted_col], labels=labels)
+            display = ConfusionMatrixDisplay(confusion_matrix=matrix, display_labels=labels)
+            display.plot(ax=ax, cmap="Blues", colorbar=False)
+            ax.set_title(title)
+            ax.tick_params(axis="x", rotation=25)
+        plt.tight_layout()
+        plt.savefig(out_dir / "risk_confusion_matrix.png", dpi=200)
+        plt.close()
+        return
+
     labels = [label for label in RISK_LABELS if label in set(forecast["actual_risk"]) | set(forecast["predicted_risk"])]
     matrix = confusion_matrix(forecast["actual_risk"], forecast["predicted_risk"], labels=labels)
     display = ConfusionMatrixDisplay(confusion_matrix=matrix, display_labels=labels)
@@ -136,6 +198,7 @@ def main() -> None:
     parser.add_argument("--processed", required=True, help="Path to kz_multicity_station_hourly_pm25.csv")
     parser.add_argument("--metrics", default=None, help="Optional path to metrics.json")
     parser.add_argument("--model-comparison", default=None, help="Optional model comparison CSV, for example XGBoost overlap results")
+    parser.add_argument("--comparison-overlap", default=None, help="Optional forecast overlap CSV with TFT, XGBoost, and baseline predictions")
     args = parser.parse_args()
 
     ARTICLE_FIGURES_DIR.mkdir(parents=True, exist_ok=True)
@@ -148,15 +211,16 @@ def main() -> None:
 
     forecast_with_baselines = build_baselines(processed, forecast)
     forecast_with_baselines.to_csv(ARTICLE_TABLES_DIR / "forecast_with_baselines.csv", index=False)
+    comparison_overlap = pd.read_csv(args.comparison_overlap, parse_dates=["timestamp"]) if args.comparison_overlap else None
 
     if args.model_comparison:
         baseline_table = pd.read_csv(args.model_comparison)
         baseline_table.to_csv(ARTICLE_TABLES_DIR / "model_comparison.csv", index=False)
     else:
         baseline_table = write_baseline_table(forecast_with_baselines, ARTICLE_TABLES_DIR)
-    plot_actual_vs_predicted(forecast_with_baselines, ARTICLE_FIGURES_DIR)
-    plot_error_distribution(forecast_with_baselines, ARTICLE_FIGURES_DIR)
-    plot_confusion_matrix(forecast_with_baselines, ARTICLE_FIGURES_DIR)
+    plot_actual_vs_predicted(forecast_with_baselines, ARTICLE_FIGURES_DIR, comparison_overlap)
+    plot_error_distribution(forecast_with_baselines, ARTICLE_FIGURES_DIR, comparison_overlap)
+    plot_confusion_matrix(forecast_with_baselines, ARTICLE_FIGURES_DIR, comparison_overlap)
     plot_model_comparison(baseline_table, ARTICLE_FIGURES_DIR)
     plot_risk_distribution(forecast_with_baselines, ARTICLE_FIGURES_DIR)
 
