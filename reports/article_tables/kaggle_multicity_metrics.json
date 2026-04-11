@@ -1,0 +1,28 @@
+{
+  "mae": 11.615321159362793,
+  "rmse": 17.624082565307617,
+  "mape": 64.77618408203125,
+  "risk_accuracy": 0.6736111111111112,
+  "risk_macro_f1": 0.439622410568812,
+  "unhealthy_precision": 1.0,
+  "unhealthy_recall": 0.676056338028169,
+  "unhealthy_f1": 0.8067226890756303,
+  "series_count": 12,
+  "rows": 150842,
+  "processed_data": "/kaggle/working/multi-agent-air-quality-kz/data/processed/kz_multicity_station_hourly_pm25.csv",
+  "checkpoint": "/kaggle/working/multi-agent-air-quality-kz/models/tft_kz_multicity_station/tft-kz-station-best-v1.ckpt",
+  "risk_threshold_note": "safe <=12.0, moderate <=35.4, unhealthy <=150.4, hazardous >150.4 ug/m3",
+  "args": {
+    "checkpoint_path": "models/tft_kz_multicity_station/tft-kz-station-best-v1.ckpt",
+    "start": "2024-01-01",
+    "max_stations_per_city": 5,
+    "encoder_hours": 168,
+    "prediction_hours": 24,
+    "test_days": 14,
+    "batch_size": 256,
+    "interpolation_limit": 3,
+    "devices": 1,
+    "export_dir": "/kaggle/working/air-quality-kz-results"
+  },
+  "export_dir": "/kaggle/working/air-quality-kz-results"
+}
