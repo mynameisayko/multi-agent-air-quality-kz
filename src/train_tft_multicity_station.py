@@ -197,6 +197,7 @@ def main() -> None:
     parser.add_argument("--learning-rate", type=float, default=0.01)
     parser.add_argument("--batch-size", type=int, default=128)
     parser.add_argument("--interpolation-limit", type=int, default=3)
+    parser.add_argument("--devices", type=int, default=1)
     parser.add_argument(
         "--export-dir",
         default=None,
@@ -250,7 +251,7 @@ def main() -> None:
     trainer = Trainer(
         max_epochs=args.max_epochs,
         accelerator="auto",
-        devices=1,
+        devices=args.devices,
         gradient_clip_val=0.1,
         log_every_n_steps=10,
         callbacks=[early_stopping, checkpoint_callback],
@@ -260,7 +261,16 @@ def main() -> None:
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     best_model = TemporalFusionTransformer.load_from_checkpoint(checkpoint_callback.best_model_path)
-    raw_predictions = best_model.predict(test_loader, mode="raw", return_x=True)
+    raw_predictions = best_model.predict(
+        test_loader,
+        mode="raw",
+        return_x=True,
+        trainer_kwargs={
+            "accelerator": "auto",
+            "devices": args.devices,
+            "strategy": "auto",
+        },
+    )
     predicted = raw_predictions.output.prediction[..., 1].detach().cpu().numpy().reshape(-1)
     actual = raw_predictions.x["decoder_target"].detach().cpu().numpy().reshape(-1)
 
