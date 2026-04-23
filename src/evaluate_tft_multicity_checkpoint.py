@@ -16,6 +16,7 @@ from train_tft_multicity_station import (
     PROCESSED_DIR,
     REPORT_DIR,
     build_dataframe,
+    decode_predictions,
     evaluate,
     export_results,
     make_datasets,
@@ -29,9 +30,12 @@ def main() -> None:
     parser.add_argument("--max-stations-per-city", type=int, default=5)
     parser.add_argument("--encoder-hours", type=int, default=168)
     parser.add_argument("--prediction-hours", type=int, default=24)
+    parser.add_argument("--validation-days", type=int, default=14)
     parser.add_argument("--test-days", type=int, default=14)
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--interpolation-limit", type=int, default=3)
+    parser.add_argument("--loss", choices=["quantile", "mae", "rmse"], default="mae")
+    parser.add_argument("--evaluation-horizon", type=int, default=24)
     parser.add_argument("--devices", type=int, default=1)
     parser.add_argument("--export-dir", default=None)
     args = parser.parse_args()
@@ -44,10 +48,11 @@ def main() -> None:
     processed_path = PROCESSED_DIR / "kz_multicity_station_hourly_pm25.csv"
     df.to_csv(processed_path, index=False)
 
-    _, _, test, full_df, _ = make_datasets(
+    _, _, test, full_df, split_info = make_datasets(
         df,
         encoder_hours=args.encoder_hours,
         prediction_hours=args.prediction_hours,
+        validation_days=args.validation_days,
         test_days=args.test_days,
     )
     test_loader = test.to_dataloader(train=False, batch_size=args.batch_size, num_workers=0)
@@ -65,23 +70,20 @@ def main() -> None:
         },
     )
 
-    predicted = raw_predictions.output.prediction[..., 1].detach().cpu().numpy().reshape(-1)
-    actual = raw_predictions.x["decoder_target"].detach().cpu().numpy().reshape(-1)
-
-    tails = (
-        full_df.groupby("series_id", group_keys=False)
-        .tail(args.prediction_hours)
-        .sort_values(["series_id", "time_idx"])
-        .reset_index(drop=True)
+    point_prediction_index = 1 if args.loss == "quantile" else 0
+    forecast = decode_predictions(
+        dataset=test,
+        full_df=full_df,
+        raw_predictions=raw_predictions,
+        prediction_hours=args.prediction_hours,
+        point_prediction_index=point_prediction_index,
+        evaluation_horizon=args.evaluation_horizon,
     )
-    forecast = tails[["timestamp", "city", "station_id", "station_name", "lat", "lon"]].copy()
-    forecast["actual_pm25"] = actual
-    forecast["predicted_pm25"] = predicted
-    forecast["absolute_error"] = np.abs(actual - predicted)
-    forecast = add_risk_columns(forecast)
     forecast_path = REPORT_DIR / "test_forecast_with_risk.csv"
     forecast.to_csv(forecast_path, index=False)
 
+    actual = forecast["actual_pm25"].to_numpy()
+    predicted = forecast["predicted_pm25"].to_numpy()
     metrics = evaluate(actual, predicted)
     metrics.update(
         {
@@ -92,9 +94,11 @@ def main() -> None:
             "unhealthy_f1": float(f1_score(forecast["actual_unhealthy_or_worse"], forecast["predicted_unhealthy_or_worse"], zero_division=0)),
             "series_count": int(full_df["series_id"].nunique()),
             "rows": int(len(full_df)),
+            "forecast_rows": int(len(forecast)),
             "processed_data": str(processed_path.resolve()),
             "checkpoint": str(checkpoint_path.resolve()),
             "risk_threshold_note": "safe <=12.0, moderate <=35.4, unhealthy <=150.4, hazardous >150.4 ug/m3",
+            "split": split_info,
             "args": vars(args),
         }
     )

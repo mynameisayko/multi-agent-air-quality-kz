@@ -89,7 +89,12 @@ def add_origin_keys(tft_forecast_path: Path, horizon_hours: int) -> pd.DataFrame
         dtype={"city": "string", "station_id": "string", "station_name": "string"},
     )
     test["series_id"] = test["city"].astype(str) + "__" + test["station_id"].astype(str)
-    test["origin_timestamp"] = test["timestamp"] - pd.Timedelta(hours=horizon_hours)
+    if "origin_timestamp" in test.columns:
+        test["origin_timestamp"] = pd.to_datetime(test["origin_timestamp"])
+    else:
+        test["origin_timestamp"] = test["timestamp"] - pd.Timedelta(hours=horizon_hours)
+    if "horizon_step" in test.columns:
+        test = test[test["horizon_step"] == horizon_hours].copy()
     return test
 
 
