@@ -96,7 +96,7 @@ def regularize_station(group: pd.DataFrame, interpolation_limit: int) -> pd.Data
     index = pd.date_range(group["timestamp"].min(), group["timestamp"].max(), freq="h")
     meta_cols = ["city", "station_id", "station_name", "lat", "lon"]
     meta = group[meta_cols].iloc[0].to_dict()
-    local_meta = group.set_index("timestamp")["local_timestamp"]
+    local_meta = group.groupby("timestamp")["local_timestamp"].first()
     hourly = group.groupby("timestamp", as_index=False).agg(pm25_value=("pm25_value", "mean"))
     regular = hourly.set_index("timestamp").reindex(index).rename_axis("timestamp").reset_index()
     for col, value in meta.items():
