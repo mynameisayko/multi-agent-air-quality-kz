@@ -74,7 +74,7 @@ def load_city(city: str, path: Path, start: str, max_stations: int) -> pd.DataFr
     raw = raw[raw["datetime_utc"] >= pd.Timestamp(start, tz="UTC")].copy()
     raw["timestamp"] = raw["datetime_utc"].dt.floor("h").dt.tz_convert(None)
     local_tz = CITY_TIMEZONES[city]
-    raw["local_timestamp"] = raw["datetime_utc"].dt.tz_convert(local_tz).dt.floor("h").dt.tz_localize(None)
+    raw["local_timestamp"] = raw["datetime_utc"].dt.tz_convert(local_tz).dt.tz_localize(None).dt.floor("h")
     raw["city"] = city
     raw["station_id"] = raw["station_id"].astype(str)
     raw["station_name"] = raw["station_name"].fillna("unknown").astype(str)
