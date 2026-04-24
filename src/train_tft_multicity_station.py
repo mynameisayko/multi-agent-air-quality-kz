@@ -25,6 +25,7 @@ DATA_DIR = PROJECT_ROOT / "data" / "external" / "airdata_kz_hourly_pm25"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 MODEL_DIR = PROJECT_ROOT / "models" / "tft_kz_multicity_station"
 REPORT_DIR = PROJECT_ROOT / "reports" / "tft_kz_multicity_station"
+COLAB_DEFAULT_EXPORT_DIR = Path("/content/drive/MyDrive/air-quality-kz-results")
 
 CITY_FILES = {
     "almaty": DATA_DIR / "almaty" / "pm25.csv.gz",
@@ -243,6 +244,30 @@ def export_results(export_dir: Path, report_dir: Path, model_dir: Path, processe
     shutil.copy2(processed_path, data_destination)
 
 
+def detect_runtime() -> str:
+    if "google.colab" in __import__("sys").modules:
+        return "colab"
+    if Path("/kaggle/working").exists():
+        return "kaggle"
+    return "local"
+
+
+def resolve_export_dir(export_dir_arg: str | None) -> Path | None:
+    runtime = detect_runtime()
+    if export_dir_arg:
+        export_dir = Path(export_dir_arg)
+        if runtime == "colab" and str(export_dir).startswith("/kaggle/"):
+            raise ValueError(
+                "Colab run detected, but --export-dir points to /kaggle/. "
+                "Use a Google Drive path like /content/drive/MyDrive/air-quality-kz-results."
+            )
+        return export_dir
+
+    if runtime == "colab" and COLAB_DEFAULT_EXPORT_DIR.parent.exists():
+        return COLAB_DEFAULT_EXPORT_DIR
+    return None
+
+
 def write_run_state(report_dir: Path, payload: dict[str, object]) -> None:
     (report_dir / "run_state.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
@@ -364,6 +389,7 @@ def main() -> None:
         help="Optional directory for copying reports, checkpoints, and processed data. Use a Google Drive path in Colab.",
     )
     args = parser.parse_args()
+    export_dir = resolve_export_dir(args.export_dir)
 
     seed_everything(42, workers=True)
     torch.set_float32_matmul_precision("medium")
@@ -379,12 +405,12 @@ def main() -> None:
         {
             "reason": "pre_fit",
             "processed_data": str(processed_path.resolve()),
-            "args": vars(args),
+            "args": vars(args) | {"resolved_export_dir": str(export_dir) if export_dir else None},
         },
     )
-    if args.export_dir:
-        export_results(Path(args.export_dir), REPORT_DIR, MODEL_DIR, processed_path)
-        shutil.copy2(REPORT_DIR / "run_state.json", Path(args.export_dir) / f"reports_{REPORT_DIR.name}" / "run_state.json")
+    if export_dir:
+        export_results(export_dir, REPORT_DIR, MODEL_DIR, processed_path)
+        shutil.copy2(REPORT_DIR / "run_state.json", export_dir / f"reports_{REPORT_DIR.name}" / "run_state.json")
 
     training, validation, test, full_df, split_info = make_datasets(
         df,
@@ -409,7 +435,7 @@ def main() -> None:
     early_stopping = EarlyStopping(monitor="val_loss", patience=6, mode="min")
     logger = CSVLogger(save_dir=str(REPORT_DIR), name="lightning_logs")
     export_callback = ExportArtifactsCallback(
-        export_dir=Path(args.export_dir) if args.export_dir else None,
+        export_dir=export_dir,
         report_dir=REPORT_DIR,
         model_dir=MODEL_DIR,
         processed_path=processed_path,
@@ -493,12 +519,11 @@ def main() -> None:
     )
     (REPORT_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 
-    if args.export_dir:
-        export_path = Path(args.export_dir)
-        export_results(export_path, REPORT_DIR, MODEL_DIR, processed_path)
-        metrics["export_dir"] = str(export_path.resolve())
+    if export_dir:
+        export_results(export_dir, REPORT_DIR, MODEL_DIR, processed_path)
+        metrics["export_dir"] = str(export_dir.resolve())
         (REPORT_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
-        shutil.copy2(REPORT_DIR / "metrics.json", export_path / f"reports_{REPORT_DIR.name}" / "metrics.json")
+        shutil.copy2(REPORT_DIR / "metrics.json", export_dir / f"reports_{REPORT_DIR.name}" / "metrics.json")
 
     print(json.dumps(metrics, indent=2))
 

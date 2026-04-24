@@ -1,99 +1,132 @@
 # Colab GPU Runbook: Multi-city Station-level TFT
 
-Use this in Google Colab with GPU enabled.
+Use these cells in Google Colab. The key rule is simple: save to Google Drive, not to `/content` and not to `/kaggle/working`.
 
-## 1. Runtime
-
-In Colab:
+## 1. Enable GPU
 
 - `Runtime` -> `Change runtime type`
 - Hardware accelerator: `T4 GPU` or better
 
-## 2. Install dependencies
-
-```bash
-!pip install lightning pytorch-forecasting scikit-learn pandas numpy
-```
-
-## 2.1 Mount Google Drive for persistent outputs
+## 2. Mount Google Drive
 
 ```python
 from google.colab import drive
-drive.mount('/content/drive')
+drive.mount("/content/drive")
 ```
 
-## 3. Upload or clone project
+## 3. Clone or update the repo
 
-Option A: upload the project folder to Google Drive and mount it.
-
-```python
-from google.colab import drive
-drive.mount('/content/drive')
-```
-
-Option B: clone from GitHub after you push the private repository.
+First run:
 
 ```bash
-!git clone <YOUR_PRIVATE_REPO_URL>
-%cd multi-agent-air-quality-kz
+%cd /content
+!git clone https://github.com/mynameisayko/multi-agent-air-quality-kz.git
+%cd /content/multi-agent-air-quality-kz
 ```
 
-## 4. Download multi-city PM2.5 data
+Later runs:
 
 ```bash
+%cd /content/multi-agent-air-quality-kz
+!git pull
+```
+
+## 4. Install dependencies
+
+```bash
+%cd /content/multi-agent-air-quality-kz
+!pip install -r requirements.txt
+!python -c "import pytorch_forecasting, lightning, torch; print('deps ok')"
+!nvidia-smi
+```
+
+## 5. Download data
+
+```bash
+%cd /content/multi-agent-air-quality-kz
 !python src/download_airdata_pm25_multicity.py
 ```
 
-## 5. Fast GPU baseline
+## 6. Safe Colab training run
+
+If Drive is mounted, `train_tft_multicity_station.py` will automatically use `/content/drive/MyDrive/air-quality-kz-results` even if you omit `--export-dir`.
 
 ```bash
+%cd /content/multi-agent-air-quality-kz
 !python src/train_tft_multicity_station.py \
-  --start 2023-01-01 \
-  --max-stations-per-city 10 \
+  --start 2024-01-01 \
+  --max-stations-per-city 5 \
+  --encoder-hours 168 \
+  --prediction-hours 24 \
+  --validation-days 14 \
+  --test-days 14 \
+  --evaluation-horizon 24 \
   --max-epochs 20 \
   --hidden-size 32 \
   --attention-head-size 4 \
   --dropout 0.1 \
-  --learning-rate 0.01 \
-  --batch-size 256 \
-  --export-dir /content/drive/MyDrive/air-quality-kz-results
+  --learning-rate 0.003 \
+  --batch-size 64 \
+  --interpolation-limit 3 \
+  --loss mae
 ```
 
-## 6. Hyperparameter tuning candidates
-
-Run these one by one and compare `reports/tft_kz_multicity_station/metrics.json`.
-The `--export-dir` option copies the latest report folder, checkpoint folder, and processed data to Google Drive.
+## 7. Resume after session interruption
 
 ```bash
-!python src/train_tft_multicity_station.py --start 2023-01-01 --max-stations-per-city 15 --max-epochs 30 --hidden-size 32 --attention-head-size 4 --dropout 0.1 --learning-rate 0.005 --batch-size 256 --export-dir /content/drive/MyDrive/air-quality-kz-results
+%cd /content/multi-agent-air-quality-kz
+!python src/train_tft_multicity_station.py \
+  --start 2024-01-01 \
+  --max-stations-per-city 5 \
+  --encoder-hours 168 \
+  --prediction-hours 24 \
+  --validation-days 14 \
+  --test-days 14 \
+  --evaluation-horizon 24 \
+  --max-epochs 20 \
+  --hidden-size 32 \
+  --attention-head-size 4 \
+  --dropout 0.1 \
+  --learning-rate 0.003 \
+  --batch-size 64 \
+  --interpolation-limit 3 \
+  --loss mae \
+  --resume-from-checkpoint /content/drive/MyDrive/air-quality-kz-results/models_tft_kz_multicity_station/last.ckpt
 ```
+
+## 8. Check what was saved
 
 ```bash
-!python src/train_tft_multicity_station.py --start 2023-01-01 --max-stations-per-city 15 --max-epochs 30 --hidden-size 64 --attention-head-size 4 --dropout 0.15 --learning-rate 0.005 --batch-size 256 --export-dir /content/drive/MyDrive/air-quality-kz-results
+!find /content/drive/MyDrive/air-quality-kz-results -maxdepth 3 -type f | sort
 ```
+
+Expected important files:
+
+- `models_tft_kz_multicity_station/last.ckpt`
+- `models_tft_kz_multicity_station/tft-kz-station-best.ckpt`
+- `reports_tft_kz_multicity_station/metrics.json`
+- `reports_tft_kz_multicity_station/run_state.json`
+- `reports_tft_kz_multicity_station/test_forecast_with_risk.csv`
+
+## 9. Compare with XGBoost
 
 ```bash
-!python src/train_tft_multicity_station.py --start 2022-01-01 --max-stations-per-city 20 --max-epochs 40 --hidden-size 64 --attention-head-size 8 --dropout 0.2 --learning-rate 0.003 --batch-size 256 --export-dir /content/drive/MyDrive/air-quality-kz-results
+%cd /content/multi-agent-air-quality-kz
+!python src/train_xgboost_baseline.py \
+  --processed /content/drive/MyDrive/air-quality-kz-results/kz_multicity_station_hourly_pm25.csv \
+  --tft-forecast /content/drive/MyDrive/air-quality-kz-results/reports_tft_kz_multicity_station/test_forecast_with_risk.csv \
+  --output-dir /content/drive/MyDrive/air-quality-kz-results/xgboost_baseline
 ```
 
-## 7. Main outputs
-
-- `models/tft_kz_multicity_station/tft-kz-station-best.ckpt`
-- `reports/tft_kz_multicity_station/metrics.json`
-- `reports/tft_kz_multicity_station/test_forecast_with_risk.csv`
-- `data/processed/kz_multicity_station_hourly_pm25.csv`
-
-## 8. What to optimize
+## 10. What to optimize
 
 Primary regression metrics:
 
 - `MAE`
 - `RMSE`
 
-Primary health-risk metrics:
+Primary risk metrics:
 
 - `risk_macro_f1`
 - `unhealthy_recall`
 - `unhealthy_f1`
-
-For health-risk warning, recall is important because missing dangerous pollution episodes is worse than issuing a few false warnings.
